@@ -4,9 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<meta name="description" content="Interactive demo: scoring customer accounts from the first discovery call to renewal, not just from the first login. Built by Pearl McGuire.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Account Journey Score">
+<meta property="og:description" content="What if account scoring started at the first discovery call, not the first login? An interactive demo with 20 fictional accounts. Move the weights, move Customer Success, and watch the scores change.">
+<meta property="og:url" content="https://pearlmcguire-gif.github.io/account-journey-dashboard/">
+<meta property="og:image" content="https://pearlmcguire-gif.github.io/account-journey-dashboard/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Account Journey Score dashboard showing account scores at every stage of the customer journey">
+<meta name="author" content="Pearl McGuire">
+<meta name="twitter:card" content="summary_large_image">
 <title>Account Journey Score</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Interactive demo: scoring customer accounts across the full journey, from discovery to renewal.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Playfair+Display:wght@600;700&display=swap">
@@ -185,6 +195,7 @@ table.goals{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
 
 footer .wrap{padding-block:24px 36px;font-size:13px;color:var(--sub);display:grid;gap:6px}
 footer b{color:var(--fg)}
+footer a{color:var(--accent-strong);font-weight:700}
 
 @media (max-width:900px){
   .controls .wrap,main .wrap,.loop .wrap{grid-template-columns:minmax(0,1fr)}
@@ -294,7 +305,7 @@ footer .wrap{padding-bottom:80px}
   <div class="wrap">
     <div>All companies, people, and figures on this page are fictional and for demonstration only.</div>
     <div>Each score is built from criteria recorded at every stage of the journey. The criteria, scoring guides, and discovery question set behind it are not part of this demo.</div>
-    <div><b>Concept and framework © 2026 Pearl McGuire.</b> Want to talk through the full approach? Reach out to Pearl on LinkedIn.</div>
+    <div><b>Concept and framework © 2026 Pearl McGuire.</b> Want to talk through the full approach? <a href="https://www.linkedin.com/in/pearlmcguire" target="_blank" rel="noopener">Reach out to Pearl on LinkedIn</a>.</div>
 <div>This page uses PostHog, without cookies, to count which parts get used. Feedback you send is anonymous unless you add your name.</div>
   </div>
 </footer>
@@ -618,7 +629,7 @@ const CONFIG={
   posthogKey:"phc_s65M8H7Wxc7P4FTMWaFFJHGKcZ8xnUoYv8ddcUES2EdE",
   posthogHost:"https://eu.i.posthog.com",
   surveyId:"01a17dac-a19e-0000-e176-226b4e2c95eb",
-  linkedin:""   /* your LinkedIn profile address, used when a browser blocks the form */
+  linkedin:"https://www.linkedin.com/in/pearlmcguire"   /* your LinkedIn profile address, used when a browser blocks the form */
 };
 </script>
 <script>
