@@ -230,6 +230,10 @@ footer .wrap{padding-bottom:80px}
 .fbfb{margin:0;font-size:13px;color:var(--warn);font-weight:500}
 .fbfb a{color:var(--accent-strong)}
 #fbFallback .fbsecondary{justify-self:start;margin-top:0}
+.fbways{display:grid;gap:8px}
+.fbway{display:block;text-align:left;width:100%;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);padding:10px 12px;font-family:var(--body);font-size:14px;font-weight:700;cursor:pointer;text-decoration:none}
+.fbway:hover{border-color:var(--accent)}
+.fbway span{display:block;font-size:12px;font-weight:400;color:var(--sub);margin-top:2px}
 </style>
 
 </head>
@@ -607,9 +611,14 @@ addEventListener("scroll",()=>{if(!tip.hidden&&lastBtn&&lastBtn.isConnected)_sho
     <p class="fbnote">Anonymous unless you add your name.</p>
     <p id="fbStatus" role="status"></p>
     <div id="fbFallback" hidden>
-      <p class="fbfb">Your browser's privacy settings blocked this form from sending. Copy your feedback below and send it to Pearl directly<span id="fbLi"></span>.</p>
-      <textarea id="fbCopyText" rows="4" readonly></textarea>
-      <button type="button" id="fbCopy" class="fbsecondary">Copy feedback</button>
+      <p class="fbfb">Your browser's privacy settings blocked this form from sending. You can still send it to Pearl directly:</p>
+      <div class="fbways">
+        <a id="fbMail" class="fbway" href="#">Email<span>Opens your email app with everything filled in</span></a>
+        <button type="button" id="fbLiBtn" class="fbway">LinkedIn message<span>Copies your feedback and opens Pearl's LinkedIn profile</span></button>
+        <button type="button" id="fbSlack" class="fbway">Slack<span>Copies your feedback to paste in a DM to Pearl or the thread where you found this</span></button>
+      </div>
+      <textarea id="fbCopyText" rows="4" readonly aria-label="Your feedback, ready to copy"></textarea>
+      <p id="fbCopied" class="fbnote" role="status"></p>
     </div>
     <div class="fbactions">
       <button type="button" id="fbCancel" class="fbsecondary">Cancel</button>
@@ -708,12 +717,19 @@ form.addEventListener("submit",async e=>{e.preventDefault();
   }catch(err){
     status.textContent="";
     $("fbCopyText").value=text;
-    $("fbLi").innerHTML=CONFIG.linkedin?` on <a href="${esc(CONFIG.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:" on LinkedIn";
+    const addr=["pearl.mcguire","gmail.com"].join("@");
+    $("fbMail").href="mailto:"+addr+"?subject="+encodeURIComponent("Feedback: Account Journey Score ("+answers[0]+")")+"&body="+encodeURIComponent(text);
+    $("fbCopied").textContent="";
     $("fbFallback").hidden=false;$("fbSend").hidden=true;
   }
 });
-$("fbCopy").addEventListener("click",async()=>{const t=$("fbCopyText");
-  try{await navigator.clipboard.writeText(t.value);$("fbCopy").textContent="Copied"}catch(_){t.select();$("fbCopy").textContent="Selected: press Ctrl+C or Cmd+C"}});
+function copyFb(msg){const t=$("fbCopyText");
+  const done=()=>{$("fbCopied").textContent=msg};
+  try{navigator.clipboard.writeText(t.value).then(done,()=>{t.select();$("fbCopied").textContent="Select the text above and copy it (Ctrl+C or Cmd+C)."})}
+  catch(_){t.select();$("fbCopied").textContent="Select the text above and copy it (Ctrl+C or Cmd+C)."}}
+$("fbMail").addEventListener("click",()=>{copyFb("Opening your email. Your feedback is also copied, in case you use webmail.");track("feedback_fallback",{via:"email"})});
+$("fbLiBtn").addEventListener("click",()=>{copyFb("Copied. On Pearl's profile, click Message and paste.");window.open(CONFIG.linkedin,"_blank","noopener");track("feedback_fallback",{via:"linkedin"})});
+$("fbSlack").addEventListener("click",()=>{copyFb("Copied. Paste it in a DM to Pearl or in the thread where you found this.");track("feedback_fallback",{via:"slack"})});
 </script>
 
 </body>
