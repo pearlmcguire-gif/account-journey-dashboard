@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Account Journey Score</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Interactive demo: scoring customer accounts across the full journey, from discovery to renewal.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+/* Layout: ink-purple header band, control strip, portfolio list beside a sticky account detail, learning-loop panel below. */
+:root{
+  --ink:#2b183f; --deep:#1d102c; --paper:#fbfaf6; --cyan:#05a8d1; --cyan-dk:#007b9c; --lav:#9b83b6; --muted:#6f6777;
+  --bg:var(--paper); --fg:var(--ink); --sub:var(--muted); --surface:#ffffff; --surface2:#f3eff8; --line:#e2dbea;
+  --accent:var(--cyan-dk); --accent-soft:#d9f1f7; --band:var(--ink); --band-fg:var(--paper);
+  --good:#25805f; --good-bg:#dcefe7; --warn:#a86b0c; --warn-bg:#f6e8cf; --risk:#b23441; --risk-bg:#f6dadd;
+  --s1:#d66a73; --s2:#e3ac55; --s3:#cfc4dd; --s4:#7cc8d9; --s5:#0a8fb1; --cell-fg:#1d102c; --cell-fg5:#ffffff;
+  --usage:var(--lav); --value:var(--cyan-dk);
+  --display:"Playfair Display", Georgia, "Times New Roman", serif;
+  --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:var(--deep); --fg:#f3eff8; --sub:#b9adc9; --surface:#2b183f; --surface2:#24143a; --line:#3f2c57;
+  --accent:#3fc3e4; --accent-soft:#123e4f; --band:#2b183f; --band-fg:#fbfaf6;
+  --good:#5fc79c; --good-bg:#16382d; --warn:#e9b65c; --warn-bg:#3d2e14; --risk:#ef7d87; --risk-bg:#45192a;
+  --s1:#c4525d; --s2:#c99037; --s3:#5b4775; --s4:#2f8ea5; --s5:#05a8d1; --cell-fg:#fbfaf6; --cell-fg5:#1d102c;
+  --usage:#b49fd0; --value:#3fc3e4; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:var(--deep); --fg:#f3eff8; --sub:#b9adc9; --surface:#2b183f; --surface2:#24143a; --line:#3f2c57;
+  --accent:#3fc3e4; --accent-soft:#123e4f; --band:#2b183f; --band-fg:#fbfaf6;
+  --good:#5fc79c; --good-bg:#16382d; --warn:#e9b65c; --warn-bg:#3d2e14; --risk:#ef7d87; --risk-bg:#45192a;
+  --s1:#c4525d; --s2:#c99037; --s3:#5b4775; --s4:#2f8ea5; --s5:#05a8d1; --cell-fg:#fbfaf6; --cell-fg5:#1d102c;
+  --usage:#b49fd0; --value:#3fc3e4; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--sub)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header.band{background:var(--band);color:var(--band-fg)}
+header .wrap{padding-block:36px 30px;display:grid;gap:18px}
+header h1{font-size:clamp(30px,5vw,46px)}
+header .lede{max-width:64ch;font-size:17px;opacity:.92;margin:0}
+header .eyebrow{color:#7fd6ec}
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:6px}
+.howto div{border-top:1px solid rgba(251,250,246,.25);padding-top:10px;font-size:14px;opacity:.9}
+.howto b{display:block;font-family:var(--display);font-size:16px;margin-bottom:2px;color:#fbfaf6}
+
+.controls{background:var(--surface2);border-bottom:1px solid var(--line)}
+.controls .wrap{padding-block:18px;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px;align-items:start}
+.weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 18px}
+.w label{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:500}
+.w output{font-weight:700;color:var(--accent)}
+.wl{display:flex;align-items:flex-end;gap:6px;font-size:13px;font-weight:500}
+.wl output{margin-left:auto}
+.wn{min-width:0}
+.w .wn label{display:inline}
+.nw{white-space:nowrap}
+.weights{align-items:end}
+.wn{line-height:1.6}
+.wn .info{vertical-align:-3px;margin-left:2px}
+.info{flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:11px;line-height:1;padding:0;cursor:help;display:inline-grid;place-items:center}
+.info:hover,.info[aria-expanded="true"]{background:var(--accent);color:var(--bg)}
+.tip{position:fixed;z-index:20;width:min(300px,calc(100vw - 32px));background:var(--surface);color:var(--fg);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.45;box-shadow:0 8px 24px rgba(29,16,44,.18)}
+.tip b{display:block;font-family:var(--display);font-size:15px;margin-bottom:3px}
+.w input{width:100%;accent-color:var(--accent)}
+.ctl-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.ctl-head h2{font-size:18px}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer;padding:4px 0;font-size:13px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fbfaf6;border-color:var(--ink)}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:var(--accent);color:#1d102c;border-color:var(--accent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{background:var(--accent);color:#1d102c;border-color:var(--accent)}}
+.join-note{font-size:13px;color:var(--sub);margin:8px 0 0}
+
+.summary .wrap{padding-block:22px 6px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{padding:12px 0;border-top:3px solid var(--line)}
+.stat .v{font-family:var(--display);font-size:32px;font-weight:700;line-height:1}
+.stat .l{font-size:14px;font-weight:700;margin-top:6px}
+.stat .d{font-size:12px;color:var(--sub);margin-top:3px;max-width:34ch;line-height:1.4}
+.stat.risk{border-color:var(--risk)} .stat.warn{border-color:var(--warn)} .stat.good{border-color:var(--good)} .stat.acc{border-color:var(--accent)}
+.pipeline{display:flex;gap:2px;margin-top:8px;height:8px;border-radius:4px;overflow:hidden}
+.pipeline span{background:var(--lav)} .pipeline span:nth-child(2){background:#7a64a0}.pipeline span:nth-child(3){background:var(--cyan-dk)}.pipeline span:nth-child(4){background:var(--cyan)}
+
+main .wrap{padding-block:18px 28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.listhead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.listhead h2{font-size:22px}
+.listhead select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;font-size:13px}
+.filters{margin-bottom:10px}
+.rows{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:6px;padding:10px 12px;cursor:pointer}
+.row:hover{border-color:var(--lav)}
+.row[aria-current="true"]{outline:2px solid var(--accent);outline-offset:-1px}
+.row.b-risk{border-left-color:var(--risk)} .row.b-watch{border-left-color:var(--warn)} .row.b-good{border-left-color:var(--good)}
+.row.hiddenacc{opacity:.6;border-left-style:dashed}
+.row .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{font-size:12px;color:var(--sub);grid-column:1}
+.row .sc{grid-row:1/4;grid-column:2;display:flex;flex-direction:column;align-items:flex-end;gap:7px;padding-left:8px}
+.meta2{grid-column:1;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12px}
+.rn{color:var(--sub)} .rn.soon{color:var(--warn);font-weight:700}
+.sch.over{color:var(--risk);font-weight:700} .sch.near{color:var(--warn);font-weight:700}
+.fcs{display:inline-flex;flex-wrap:wrap;gap:4px}
+.fc{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px}
+.fc.crit{background:var(--risk-bg);color:var(--risk)} .fc.watch{background:var(--warn-bg);color:var(--warn)} .fc.pos{background:var(--good-bg);color:var(--good)}
+.mb{display:grid;gap:3px;min-width:0}
+.mbl{font-size:10.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .sc b{font-family:var(--display);font-size:24px;display:block;line-height:1}
+.minibars{grid-column:1/3;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:8px}
+.minibars i{display:block;height:5px;border-radius:3px;background:var(--surface2);position:relative;overflow:hidden}
+.minibars i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--p);background:var(--accent)}
+.dots{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.crit{background:var(--risk)} .dot.watch{background:var(--warn)} .dot.pos{background:var(--good)}
+
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
+.pill.risk{background:var(--risk-bg);color:var(--risk)} .pill.watch{background:var(--warn-bg);color:var(--warn)} .pill.good{background:var(--good-bg);color:var(--good)} .pill.none{background:var(--surface2);color:var(--sub)}
+.chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;background:var(--surface2);color:var(--sub);font-weight:500}
+
+.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px;min-width:0}
+.sect,.dhead,.overall{min-width:0}
+.dhead{display:grid;gap:6px}
+.dhead .eyebrow+.eyebrow{margin-top:-4px}
+.dhead .eyebrow .rn{color:inherit}.dhead .eyebrow .rn.soon{color:var(--warn)}
+.ovs{display:grid;gap:14px;justify-items:start}
+.dhead h2{font-size:26px}
+.dhead p{margin:0;color:var(--sub);max-width:62ch}
+.overall{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center}
+.big{font-family:var(--display);font-size:56px;font-weight:700;line-height:1}
+.big small{font-size:16px;color:var(--sub);font-family:var(--body);font-weight:500}
+.dims{display:grid;gap:7px}
+.dim{display:grid;grid-template-columns:minmax(0,1fr) 90px 34px;gap:10px;align-items:center;font-size:13px}
+.dn{display:flex;align-items:center;gap:6px;min-width:0}
+.dim .dn{justify-content:space-between}
+.track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.track span{display:block;height:100%;background:var(--accent);border-radius:4px}
+.capnote{font-size:13px;color:var(--risk);margin-top:6px;font-weight:500}
+.sect h3{font-size:18px;margin-bottom:8px}
+.sect .hint{font-size:13px;color:var(--sub);margin:0 0 10px}
+.gridwrap{overflow-x:auto}
+table.journey{border-collapse:separate;border-spacing:3px;width:100%;min-width:440px;font-size:12px}
+.journey th{font-weight:500;color:var(--sub);text-align:left;padding:2px 4px}
+.journey thead th{text-align:center}
+.journey td{text-align:center;height:30px;border-radius:4px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--cell-fg)}
+.c1{background:var(--s1)}.c2{background:var(--s2)}.c3{background:var(--s3)}.c4{background:var(--s4)}.c5{background:var(--s5);color:var(--cell-fg5)!important}
+.cnr{background:transparent;border:1px dashed var(--line);color:var(--sub)!important;font-weight:400!important}
+.chid{background:repeating-linear-gradient(135deg,var(--surface2) 0 6px,transparent 6px 11px);border:1px solid var(--line);color:var(--sub)!important;font-weight:400!important}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--sub);margin-top:8px;align-items:center}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.goalflow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;margin-bottom:10px}
+.goalflow b{font-family:var(--display);font-size:22px}
+.goalflow .arrow{color:var(--sub)}
+table.goals{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
+.goals th{text-align:left;color:var(--sub);font-weight:500;border-bottom:1px solid var(--line);padding:6px 6px 6px 0}
+.goals td{padding:7px 6px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.flags{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.flags li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;font-size:14px}
+.flags .late{display:block;font-size:12px;color:var(--warn)}
+.chart svg{width:100%;max-width:460px;height:auto;display:block}
+.empty{font-size:14px;color:var(--sub);background:var(--surface2);border-radius:6px;padding:12px}
+
+.loop{background:var(--surface2);border-top:1px solid var(--line)}
+.loop .wrap{padding-block:30px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.loop h2{font-size:26px;margin-bottom:8px}
+.loop p{max-width:60ch;margin:0 0 10px}
+.cmp{display:grid;gap:12px}
+.cmp .r{display:grid;grid-template-columns:minmax(0,1fr) 60px;gap:4px 10px;font-size:13px;align-items:center}
+.cmp .bars{grid-column:1;display:grid;gap:3px}
+.cmp .bars span{display:block;height:7px;border-radius:3px}
+.cmp .s{background:var(--good)} .cmp .t{background:var(--risk)}
+.cmp .sug{grid-row:1/3;grid-column:2;text-align:right;font-weight:700;color:var(--accent)}
+.primary{background:var(--accent);color:var(--bg);border:0;border-radius:6px;padding:9px 14px;font-weight:700;cursor:pointer;margin-top:12px}
+.caveat{font-size:13px;color:var(--sub)}
+
+footer .wrap{padding-block:24px 36px;font-size:13px;color:var(--sub);display:grid;gap:6px}
+footer b{color:var(--fg)}
+
+@media (max-width:900px){
+  .controls .wrap,main .wrap,.loop .wrap{grid-template-columns:minmax(0,1fr)}
+  .detail{position:static}
+}
+@media (max-width:480px){ .overall{grid-template-columns:minmax(0,1fr)} .dim{grid-template-columns:minmax(0,1fr) 70px 30px} }
+@media (prefers-reduced-motion:no-preference){ .track span,.minibars i::after{transition:width .35s ease} }
+
+.fb{border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:999px;padding:2px 10px;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;vertical-align:middle;margin-left:10px;line-height:1.6}
+.fb:hover{border-color:var(--accent)}
+h2 .fb,h3 .fb{font-family:var(--body)}
+.summary .wrap.fbrow{display:flex;justify-content:flex-end;padding-block:0 4px}
+.fbrow .fb{margin:0}
+.fbfloat{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;margin:0;padding:9px 16px;font-size:14px;background:var(--accent);color:var(--bg);border-color:var(--accent);box-shadow:0 6px 18px rgba(29,16,44,.25)}
+.fbfloat:hover{color:var(--bg)}
+dialog#fbDlg{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);padding:22px;width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 32px)}
+dialog#fbDlg::backdrop{background:rgba(29,16,44,.55)}
+#fbForm{display:grid;gap:6px}
+#fbForm h2{font-size:24px}
+#fbForm label{font-size:13px;font-weight:700;margin-top:8px}
+#fbForm label span{font-weight:400;color:var(--sub)}
+#fbForm textarea,#fbForm input{width:100%;font-family:var(--body);border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px 10px;font-size:14px}
+.fbabout{margin:0;font-size:14px;color:var(--sub)} .fbabout b{color:var(--fg)}
+.fbnote{font-size:12px;color:var(--sub);margin:6px 0 0}
+#fbStatus{font-size:13px;margin:4px 0 0;color:var(--accent);min-height:1em}
+.fbactions{display:flex;justify-content:flex-end;gap:10px}
+.fbsecondary{background:none;border:1px solid var(--line);border-radius:6px;padding:9px 14px;cursor:pointer;margin-top:12px}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+footer .wrap{padding-bottom:80px}
+</style>
+
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">Interactive demo · fictional data</div>
+    <h1>Account Journey Score</h1>
+    <p class="lede">Most health scores start at the first login and lean on usage. With AI products, usage and value have drifted apart. This demo scores 20 fictional accounts from the first discovery call onward, so a risk can be spotted when it first appears, not at renewal.</p>
+    <div class="howto">
+      <div><b>Change the weights</b>Decide how much each of the five scores matters. Every account updates as you move a slider.</div>
+      <div><b>Move Customer Success</b>Choose when Customer Success joins the account and watch how much of the journey goes dark.</div>
+      <div><b>Open an account</b>See its score at every stage, the goals being tracked, usage compared with value, and any flags.</div>
+    </div>
+  </div>
+</header>
+
+<section class="controls" aria-label="Scoring settings">
+  <div class="wrap">
+    <div>
+      <div class="ctl-head"><h2>How much each score matters</h2><button class="linkbtn" id="resetW" type="button">Reset to equal weights</button></div>
+      <div class="weights" id="weights"></div>
+    </div>
+    <div>
+      <div class="ctl-head"><h2>When Customer Success joins</h2></div>
+      <div class="seg" id="joinSeg" role="group" aria-label="When Customer Success joins"></div>
+      <p class="join-note" id="joinNote"></p>
+    </div>
+  </div>
+</section>
+
+<section class="summary" aria-label="Portfolio summary"><div class="wrap" id="summary"></div></section>
+
+<main>
+  <div class="wrap">
+    <section aria-label="Accounts">
+      <div class="listhead">
+        <h2>Portfolio</h2>
+        <label class="caveat">Sort
+          <select id="sort">
+            <option value="low">Needs attention first</option>
+            <option value="high">Strongest first</option>
+            <option value="renew">Renewal soonest</option>
+            <option value="stage">Journey stage</option>
+          </select>
+        </label>
+      </div>
+      <div class="seg filters" id="filters" role="group" aria-label="Filter accounts"></div>
+      <div class="rows" id="rows"></div>
+    </section>
+    <section class="detail" id="detail" aria-live="polite"></section>
+  </div>
+</main>
+
+<section class="loop" aria-label="Learning loop">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Learning loop</div>
+      <h2>Learn from both ends, then adjust the weights</h2>
+      <p>Retrospectives usually happen after an implementation goes wrong. Here, the accounts that went best and the ones that struggled are both compared against what was recorded in discovery and at kickoff, before anyone knew how they would turn out.</p>
+      <p>The bigger the gap between the two groups on a score, the more weight it earns.</p>
+      <div id="loopActions"></div>
+      <p class="caveat" id="loopCaveat"></p>
+    </div>
+    <div>
+      <div class="legend" style="margin:0 0 12px"><span><i style="background:var(--good)"></i>Accounts that went best: early score</span><span><i style="background:var(--risk)"></i>Accounts that struggled: early score</span><span>Suggested weight on the right</span></div>
+      <div class="cmp" id="cmp"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>All companies, people, and figures on this page are fictional and for demonstration only.</div>
+    <div>Each score is built from criteria recorded at every stage of the journey. The criteria, scoring guides, and discovery question set behind it are not part of this demo.</div>
+    <div><b>Concept and framework © 2026 Pearl McGuire.</b> Want to talk through the full approach? Reach out to Pearl on LinkedIn.</div>
+<div>This page uses PostHog, without cookies, to count which parts get used. Feedback you send is anonymous unless you add your name.</div>
+  </div>
+</footer>
+
+<script>
+const STAGES=["Discovery","Kickoff","Implementation","Adoption"];
+const DIMS=[
+ {k:0,n:"Value clarity and proof",s:"Value",def:"Does the customer have a measurable goal, a benchmark to measure it against (set together or provided by the customer), and evidence they are reaching it? Usage does not count as value here. A result measured against the benchmark does."},
+ {k:1,n:"Sales and CS alignment",s:"Alignment",def:"Are sales and Customer Success (CS) working from the same understanding of the customer's goals and discussions? A high score means the questions CS brings to the handoff already have answers, even when a broad goal still needs narrowing down together after the handoff."},
+ {k:2,n:"Readiness and onboarding",s:"Readiness",def:"Were both sides ready before the customer started using the product? This could cover setup being completed for the customer's own use case, a named project owner on their side, and integrations done on schedule. It scores your team's readiness, not only the customer's."},
+ {k:3,n:"Relationship depth",s:"Relationship",def:"How many contacts are established at the customer's company, and what are their titles? A champion with a backup, an executive sponsor, and business reviews focused on results all raise this score."},
+ {k:4,n:"Account stability",s:"Stability",def:"Is anything changing at the customer's business that could change the picture? Layoffs, restructuring, mergers, budget freezes, and key people leaving all lower this score. Higher means more stable. Sudden events also raise a flag."}];
+const JOIN=[{v:0,l:"During discovery",note:"Customer Success sees the whole journey, including what was promised in sales."},
+ {v:1,l:"At contract signature",note:"Discovery is a handover document. Anything not written down is lost."},
+ {v:3,l:"After implementation",note:"Customer Success inherits the account at go-live. Most early flags are invisible."}];
+
+/* s: scores per stage reached, order [value, alignment, readiness, relationship, stability], 1 to 5 */
+const A=[
+{n:"Brightwater Outfitters",i:"Retail",g:"Mid-Market",st:3,when:"Month 14 of contract",story:"Customer Success joined two discovery calls. Two measurable goals were confirmed at kickoff, and both were beating target by month six.",
+ s:[[4,5,4,3,4],[5,5,4,4,4],[5,4,5,4,4],[5,5,4,5,4]],raised:9,
+ goals:[["Average first response time on support tickets","9 hours","2 hours","1.5 hours"],["Tickets resolved without an agent","None","35%","41%"]],
+ flags:[["pos",3,"Matches the pattern of the accounts that went best"],["pos",3,"Customer proposed a new use case: returns handling"]],
+ ser:{u:[30,42,50,58,63,68],v:[20,35,48,60,70,78]}},
+{n:"Corvane Logistics",i:"Logistics",g:"Enterprise",st:3,when:"Month 11 of contract",story:"Fourteen goals raised in discovery, one confirmed, and no benchmark set. Teams are trying lots of workflows, so usage and credit spend keep climbing while the one tracked result has never been measured.",
+ s:[[2,3,3,3,4],[2,3,3,3,4],[3,3,4,3,4],[2,3,4,3,4]],raised:14,
+ goals:[["Time to resolve a delivery exception","Not set","30% faster","Not measured"]],
+ flags:[["watch",0,"No measurable goal at the end of discovery"],["crit",3,"Usage and credit spend up sharply for three months with no measured result"],["watch",3,"Customer finance team asking about the AI budget"]],
+ ser:{u:[25,40,58,72,85,96],v:[20,22,23,22,24,23]}},
+{n:"Halden Health Partners",i:"Healthcare",g:"Enterprise",st:2,when:"Implementation, week 9 of 12",story:"Discovery went well, but users got access before their configuration was ready. With no test plan, they tried scenarios outside their setup and reported the product as broken.",
+ s:[[4,4,3,3,4],[4,4,3,4,4],[3,3,1,3,4]],raised:6,
+ goals:[["Time to complete a patient intake summary","25 minutes","10 minutes","Not yet live"],["Intake forms needing manual rework","30%","10%","Not yet live"]],
+ flags:[["crit",2,"Access granted before the configuration was ready"],["crit",2,"Customer reported failures in scenarios outside their configured scope"],["watch",2,"No test plan agreed for the first week of access"]]},
+{n:"Mesa Verde Credit Union",i:"Financial services",g:"Mid-Market",st:3,when:"Month 18 of contract",story:"Value proven and on target for 18 months. A restructuring merged the champion's team into another department, and the champion has since left.",
+ s:[[4,4,4,4,4],[4,4,4,4,4],[4,4,4,4,4],[4,4,4,3,1]],raised:5,
+ goals:[["Loan document review time","3 days","1 day","1 day"]],
+ flags:[["crit",3,"Restructuring announced: the champion's team was merged"],["crit",3,"Champion left the company"]],
+ ser:{u:[60,62,64,63,48,40],v:[62,65,68,70,70,69]}},
+{n:"Pinecrest Insurance Group",i:"Insurance",g:"Enterprise",st:0,when:"Discovery call 3",story:"Eleven goals raised so far, most of them some version of using AI across the business. None are measurable yet, and Customer Success has not been invited.",
+ s:[[2,2,3,2,4]],raised:11,goals:[],
+ flags:[["watch",0,"Goals still broad after three discovery calls"]]},
+{n:"Tidewell Hospitality",i:"Hospitality",g:"Mid-Market",st:0,when:"Discovery call 2",story:"Customer Success joined the second discovery call. The customer named a measurable goal and shared how long booking inquiries take today.",
+ s:[[4,4,4,3,4]],raised:4,
+ goals:[["Time to answer a booking inquiry","6 hours","Under 1 hour","Not yet live"]],
+ flags:[["pos",0,"Customer Success joined discovery"]]},
+{n:"Arbor & Finch Legal",i:"Legal",g:"SMB",st:1,when:"Kickoff, week 2 of 3",story:"At kickoff, the customer described a different goal than the one in the sales record. Customer Success is re-running the discovery questions.",
+ s:[[3,2,3,2,4],[3,2,3,2,4]],raised:7,
+ goals:[["Contract first-draft time","Not set","To be agreed","Not yet live"]],
+ flags:[["watch",1,"Goal stated at kickoff differs from the discovery record"]]},
+{n:"Solano Foods",i:"Food manufacturing",g:"Enterprise",st:2,when:"Implementation, week 6 of 12",story:"Implementation is on plan and well staffed. A budget freeze for next fiscal year was announced in the news this week.",
+ s:[[4,4,4,4,4],[4,5,4,4,4],[4,4,4,4,2]],raised:6,
+ goals:[["Supplier quality report turnaround","5 days","2 days","Not yet live"]],
+ flags:[["watch",2,"Budget freeze announced for next fiscal year"]]},
+{n:"Quillmark Publishing",i:"Media",g:"SMB",st:3,when:"Month 9 of contract",story:"A steady account. The goal is confirmed and measured, slightly behind target. One QBR held so far.",
+ s:[[3,3,3,3,4],[3,4,3,3,4],[4,3,4,3,4],[4,3,4,3,4]],raised:6,
+ goals:[["Time to produce a first draft of an article","4 hours","2 hours","2.5 hours"]],
+ flags:[],ser:{u:[35,40,44,47,50,52],v:[30,36,40,44,46,48]}},
+{n:"Northgate Manufacturing",i:"Manufacturing",g:"Enterprise",st:3,when:"Month 21 of contract",story:"Discovery was weak, with no benchmark set. Goals were narrowed to two at kickoff and value was proven at go-live, so the early gaps now carry less weight.",
+ s:[[2,2,3,2,4],[3,3,3,3,4],[4,4,4,4,4],[5,4,4,4,4]],raised:12,
+ goals:[["Unplanned line stoppages per month","14","8","7"],["Maintenance reports written by hand","All","Under half","About a third"]],
+ flags:[["watch",0,"No benchmark set in discovery"],["pos",3,"Customer proposed expanding to a second plant"]],
+ ser:{u:[40,48,55,60,66,70],v:[35,45,56,64,72,80]}},
+{n:"Lumio Education",i:"Education technology",g:"Mid-Market",st:1,when:"Kickoff, week 1 of 3",story:"Customer Success sat in on discovery, so kickoff started from a confirmed goal instead of a blank page.",
+ s:[[4,5,4,3,4],[4,5,4,4,4]],raised:5,
+ goals:[["Student support questions answered same day","60%","90%","Not yet live"]],
+ flags:[["pos",0,"Customer Success joined discovery"]]},
+{n:"Redfern Energy",i:"Energy",g:"Enterprise",st:2,when:"Implementation, week 11 of 14",story:"A data integration blocker has been open for three weeks. A new IT director started last month.",
+ s:[[3,3,2,3,3],[3,3,2,3,3],[3,3,2,3,3]],raised:8,
+ goals:[["Field report processing time","2 days","Same day","Not yet live"]],
+ flags:[["watch",1,"Customer project owner has limited time for the rollout"],["crit",2,"Setup blocker open for 21 days"],["watch",2,"New IT director started"]]},
+{n:"Cobalt Street Bank",i:"Financial services",g:"Enterprise",st:0,when:"Discovery call 4",story:"Discovery is going well, but a merger with a regional bank was announced. The budget owner may change.",
+ s:[[3,3,3,4,2]],raised:6,
+ goals:[["Compliance review time per case","Being measured","To be agreed","Not yet live"]],
+ flags:[["watch",0,"Merger announced with a regional bank"]]},
+{n:"Wren Home Goods",i:"Ecommerce",g:"SMB",st:3,when:"Month 7 of contract",story:"One contact, no QBR held, and the first result was missed at go-live. Usage is falling.",
+ s:[[2,2,2,2,4],[2,2,3,2,4],[2,3,2,2,4],[2,2,3,1,4]],raised:8,
+ goals:[["Product descriptions written per week","40","120","45"]],
+ flags:[["watch",1,"Only one customer contact engaged"],["crit",2,"First result missed at go-live"],["crit",3,"No QBR held in seven months"]],
+ ser:{u:[30,34,30,26,22,18],v:[15,16,15,14,14,13]}},
+{n:"Ostara Biotech",i:"Life sciences",g:"Mid-Market",st:2,when:"Implementation, week 6 of 8",story:"The first result was measured two weeks before go-live. The executive sponsor attends every check-in.",
+ s:[[4,4,4,4,4],[5,4,4,4,4],[5,4,5,4,4]],raised:5,
+ goals:[["Lab protocol search time","20 minutes","5 minutes","6 minutes (pilot group)"]],
+ flags:[["pos",2,"First result measured before go-live"]]},
+{n:"Glenmoor Property Management",i:"Real estate",g:"Mid-Market",st:3,when:"Month 10 of contract",story:"Healthy and on target. Layoffs were announced outside the user team, so it is worth confirming who owns the renewal now.",
+ s:[[3,4,3,4,4],[4,4,3,4,4],[4,4,4,4,4],[4,4,4,4,3]],raised:7,
+ goals:[["Tenant requests routed without manual triage","None","60%","58%"]],
+ flags:[["watch",3,"Layoffs announced outside the user team"]],
+ ser:{u:[50,54,57,58,60,60],v:[48,53,57,60,62,63]}},
+{n:"Vantage Point Telecom",i:"Telecommunications",g:"Enterprise",st:1,when:"Kickoff, week 5 of 4",story:"Kickoff happened without a named project owner on the customer side, and the goals are still broad.",
+ s:[[2,3,3,3,4],[2,2,2,3,4]],raised:10,goals:[],
+ flags:[["crit",1,"Kickoff running past its planned length"],["watch",1,"No named project owner on the customer side"],["watch",1,"No measurable goal confirmed at kickoff"]]},
+{n:"Saltmarsh Travel",i:"Travel",g:"SMB",st:0,when:"Discovery call 2",story:"Customer Success was invited to the second call. Goals are forming around after-hours booking support.",
+ s:[[3,4,3,3,4]],raised:5,goals:[],flags:[["pos",0,"Customer Success joined discovery"]]},
+{n:"Kiln & Clay Studios",i:"Creative agency",g:"SMB",st:1,when:"Kickoff, week 2 of 3",story:"A small team with a clear goal, and the handover was complete. Setup is waiting on the customer's content library.",
+ s:[[4,4,4,3,4],[4,4,3,3,4]],raised:4,
+ goals:[["Time to produce a client campaign brief","2 days","Half a day","Not yet live"]],flags:[]},
+{n:"Ironbridge Staffing",i:"Staffing",g:"Mid-Market",st:3,when:"Month 16 of contract",story:"Customer Success joined discovery. Every goal confirmed at kickoff has been measured monthly, and the customer asked to expand to a second team.",
+ s:[[5,5,4,4,4],[5,5,5,4,4],[5,5,4,5,4],[5,5,5,5,4]],raised:6,
+ goals:[["Time to shortlist candidates for a role","5 days","2 days","1.5 days"],["Recruiter hours spent screening each week","20","8","7"]],
+ flags:[["pos",0,"Customer Success joined discovery"],["pos",3,"Matches the pattern of the accounts that went best"],["pos",3,"Customer asked to expand to a second team"]],
+ ser:{u:[35,45,55,62,68,75],v:[30,44,58,70,80,88]}}
+];
+
+/* Renewal month per account [year, month]; accounts still in discovery have not signed */
+const RENEW={"Brightwater Outfitters":[2027,8],"Corvane Logistics":[2026,11],"Halden Health Partners":[2027,8],"Mesa Verde Credit Union":[2027,4],"Arbor & Finch Legal":[2027,10],"Solano Foods":[2027,9],"Quillmark Publishing":[2027,1],"Northgate Manufacturing":[2027,1],"Lumio Education":[2027,10],"Redfern Energy":[2027,8],"Wren Home Goods":[2027,3],"Ostara Biotech":[2027,9],"Glenmoor Property Management":[2026,12],"Vantage Point Telecom":[2027,10],"Kiln & Clay Studios":[2027,10],"Ironbridge Staffing":[2027,6]};
+A.forEach(a=>a.rn=RENEW[a.n]||null);
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const monthsTo=a=>a.rn?(a.rn[0]-2026)*12+a.rn[1]-10:999;
+function renewText(a){if(!a.rn)return "Not signed yet";const m=monthsTo(a);return `Renews ${MON[a.rn[1]-1]} ${a.rn[0]}`+(m<=3?` · in ${m} month${m===1?"":"s"}`:"")}
+/* Schedule check for kickoff and implementation: red when past plan, gold when near the end with other trouble showing */
+function sched(a){const m=a.when.match(/week (\d+) of (\d+)/);if(!m)return null;const wk=+m[1],of=+m[2];
+  const trouble=a.flags.some(f=>f[0]!=="pos")||a.s[a.st][2]<=2;
+  return {wk,of,level:wk>of?"over":(wk/of>=0.75&&trouble)?"near":null}}
+function whenHTML(a){const s=sched(a);if(!s||!s.level)return esc(a.when);
+  const extra=s.level==="over"?` · ${s.wk-s.of} week${s.wk-s.of>1?"s":""} over plan`:" · close to running over";
+  return `<span class="sch ${s.level}">${esc(a.when)}${extra}</span>`}
+const state={w:[3,3,3,3,3],join:0,filter:"all",sort:"low",sel:1};
+const infoBtn=i=>`<button type="button" class="info" data-d="${i}" aria-label="What ${DIMS[i].n} means" aria-describedby="tip" aria-expanded="false">i</button>`;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function visible(a){return a.st>=state.join}
+function dimScore(a,d){let n=0,t=0;for(let s=state.join;s<=a.st;s++){const w=s+1;n+=a.s[s][d]*w;t+=w}return t?n/t:null}
+function pct(x){return (x-1)/4*100}
+function score(a){
+  if(!visible(a))return null;
+  const ds=DIMS.map(d=>dimScore(a,d.k));
+  let num=0,den=0;ds.forEach((v,i)=>{num+=pct(v)*state.w[i];den+=state.w[i]});
+  let raw=den?num/den:0;
+  const crit=a.flags.some(f=>f[0]==="crit");
+  const capped=crit&&raw>49;
+  return {ds,raw:Math.round(raw),val:Math.round(capped?49:raw),capped,crit};
+}
+function band(v){return v==null?"none":v>=70?"good":v>=50?"watch":"risk"}
+const BANDNAME={good:"On track",watch:"Watch",risk:"At risk",none:"Not visible"};
+
+function renderControls(){
+  $("weights").innerHTML=DIMS.map((d,i)=>`<div class="w"><div class="wl"><span class="wn"><label for="w${i}">${d.n.replace(/\S+$/,"")}</label><span class="nw"><label for="w${i}">${d.n.match(/\S+$/)[0]}</label> ${infoBtn(i)}</span></span><output id="o${i}">${state.w[i]}</output></div><input type="range" id="w${i}" min="0" max="5" step="1" value="${state.w[i]}" aria-label="Weight for ${d.n}"></div>`).join("");
+  DIMS.forEach((d,i)=>$("w"+i).addEventListener("input",e=>{state.w[i]=+e.target.value;$("o"+i).textContent=state.w[i];if(state.w.every(x=>x===0)){state.w[i]=1;e.target.value=1;$("o"+i).textContent=1}update()}));
+  $("joinSeg").innerHTML=JOIN.map(j=>`<button type="button" data-j="${j.v}" aria-pressed="${state.join===j.v}">${j.l}</button>`).join("");
+  $("joinSeg").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{state.join=+b.dataset.j;update()}));
+  const F=[["all","All"],["0","Discovery"],["1","Kickoff"],["2","Implementation"],["3","Adoption"],["risk","At risk"]];
+  $("filters").innerHTML=F.map(f=>`<button type="button" data-f="${f[0]}" aria-pressed="${state.filter===f[0]}">${f[1]}</button>`).join("");
+  $("filters").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.f;update()}));
+}
+function syncControls(){
+  state.w.forEach((v,i)=>{$("w"+i).value=v;$("o"+i).textContent=v});
+  $("joinSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.j===state.join));
+  $("filters").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===state.filter));
+  $("joinNote").textContent=JOIN.find(j=>j.v===state.join).note;
+}
+
+function renderSummary(sc){
+  const vis=A.filter(visible);
+  const counts={good:0,watch:0,risk:0};vis.forEach(a=>counts[band(sc.get(a).val)]++);
+  let early=0,earlyAll=0;
+  A.forEach(a=>a.flags.forEach(f=>{if(f[0]!=="pos"&&f[1]<3){earlyAll++;if(f[1]>=state.join)early++}}));
+  const st=[0,1,2,3].map(s=>A.filter(a=>a.st===s).length);
+  let oc=0,ow=0;const oa=new Set();
+  vis.forEach(a=>a.flags.forEach(f=>{if(f[0]==="crit"){oc++;oa.add(a)}else if(f[0]==="watch"){ow++;oa.add(a)}}));
+  $("summary").innerHTML=`
+   <div class="stat acc"><div class="v num">${vis.length}<span style="font-size:16px;color:var(--sub)"> of 20</span></div><div class="l">Accounts Customer Success can see</div><div class="d">${vis.length<20?`${20-vis.length} are still with sales, with no Customer Success involvement yet.`:"Customer Success is involved from discovery onward."}</div><div class="pipeline" aria-hidden="true">${st.map(n=>`<span style="flex:${n}"></span>`).join("")}</div><div class="d">${st.map((n,i)=>`${STAGES[i]} ${n}`).join(" · ")}</div></div>
+   <div class="stat good"><div class="v num">${counts.good}</div><div class="l">On track</div><div class="d">Score of 70 or higher and no high-risk flags. Keep the normal rhythm.</div></div>
+   <div class="stat warn"><div class="v num">${counts.watch}</div><div class="l">Watch</div><div class="d">Score of 50 to 69. Check in on the weak spots at the next touchpoint.</div></div>
+   <div class="stat risk"><div class="v num">${counts.risk}</div><div class="l">At risk</div><div class="d">Score below 50, or held there by a high-risk flag. Needs a plan now.</div></div>
+   <div class="stat risk"><div class="v num">${oc+ow}</div><div class="l">Open flags needing action</div><div class="d">${oc} high risk and ${ow} medium risk, across ${oa.size} accounts. Open an account to see each one.</div></div>
+   <div class="stat acc"><div class="v num">${early}<span style="font-size:16px;color:var(--sub)"> of ${earlyAll}</span></div><div class="l">Flags caught early</div><div class="d">High-risk and medium-risk flags raised during discovery, kickoff, or implementation, and seen by Customer Success at the stage they appeared. Move Customer Success later to see how many are only found after the fact.</div></div>`;
+}
+
+function renderRows(sc){
+  let list=A.map((a,idx)=>({a,idx,s:sc.get(a)}));
+  if(state.filter==="risk")list=list.filter(x=>x.s&&band(x.s.val)==="risk");
+  else if(state.filter!=="all")list=list.filter(x=>x.a.st===+state.filter);
+  const key=x=>x.s?x.s.val:-1;
+  if(state.sort==="low")list.sort((x,y)=>(x.s?0:1)-(y.s?0:1)||key(x)-key(y));
+  else if(state.sort==="high")list.sort((x,y)=>key(y)-key(x));
+  else if(state.sort==="renew")list.sort((x,y)=>monthsTo(x.a)-monthsTo(y.a)||key(x)-key(y));
+  else list.sort((x,y)=>x.a.st-y.a.st||key(x)-key(y));
+  if(!list.length){$("rows").innerHTML=`<div class="empty">No accounts match this filter.</div>`;return}
+  $("rows").innerHTML=list.map(({a,idx,s})=>{
+    const b=s?band(s.val):"none";
+    const fc={crit:0,watch:0,pos:0};a.flags.forEach(f=>fc[f[0]]++);
+    const chips=[["crit","high risk"],["watch","medium risk"],["pos","good sign"]].filter(([k])=>fc[k]).map(([k,l])=>`<span class="fc ${k}">${fc[k]} ${l}${k==="pos"&&fc[k]>1?"s":""}</span>`).join("");
+    const soon=monthsTo(a)<=3;
+    return `<button type="button" class="row b-${b}${s?"":" hiddenacc"}" data-i="${idx}" aria-current="${state.sel===idx}">
+      <span class="nm">${esc(a.n)}</span>
+      <span class="sc">${s?`<b class="num">${s.val}</b><span class="pill ${b}">${BANDNAME[b]}</span>`:`<span class="pill none">Not visible</span>`}</span>
+      <span class="meta">${esc(a.i)} · ${a.g} · <span class="chip">${STAGES[a.st]}</span></span>
+      <span class="meta2">${(sched(a)||{}).level?whenHTML(a):""}<span class="rn${soon?" soon":""}">${renewText(a)}</span>${s&&chips?`<span class="fcs">${chips}</span>`:""}</span>
+      ${s?`<span class="minibars">${s.ds.map((v,i)=>`<span class="mb" title="${DIMS[i].n}: ${v.toFixed(1)} of 5"><span class="mbl">${DIMS[i].s}</span><i style="--p:${pct(v)}%"></i></span>`).join("")}</span>`:""}
+    </button>`}).join("");
+  $("rows").querySelectorAll(".row").forEach(r=>r.addEventListener("click",()=>{state.sel=+r.dataset.i;update();if(innerWidth<900)$("detail").scrollIntoView({behavior:"smooth",block:"start"})}));
+}
+
+function chart(ser){
+  const W=340,H=150,L=28,R=64,T=10,B=22,n=ser.u.length;
+  const x=i=>L+i*(W-L-R)/(n-1),y=v=>T+(100-v)*(H-T-B)/100;
+  const path=a=>a.map((v,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  let g="";[0,50,100].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" font-size="10" text-anchor="end" fill="var(--sub)">${v}</text>`});
+  for(let i=0;i<n;i++)g+=`<text x="${x(i)}" y="${H-6}" font-size="10" text-anchor="middle" fill="var(--sub)">M${i+1}</text>`;
+  const lu=ser.u[n-1],lv=ser.v[n-1];let yu=y(lu),yv=y(lv);if(Math.abs(yu-yv)<14){if(yu<yv){yu-=6;yv+=6}else{yu+=6;yv-=6}}
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Usage compared with value over the last six months">${g}
+   <path d="${path(ser.u)}" fill="none" stroke="var(--usage)" stroke-width="2.5" stroke-dasharray="5 4"/>
+   <path d="${path(ser.v)}" fill="none" stroke="var(--value)" stroke-width="2.5"/>
+   <circle cx="${x(n-1)}" cy="${y(lu)}" r="3.5" fill="var(--usage)"/><circle cx="${x(n-1)}" cy="${y(lv)}" r="3.5" fill="var(--value)"/>
+   <text x="${x(n-1)+8}" y="${yu+4}" font-size="11" fill="var(--sub)">Usage</text>
+   <text x="${x(n-1)+8}" y="${yv+4}" font-size="11" font-weight="700" fill="var(--value)">Value</text></svg>`;
+}
+
+function renderDetail(sc){
+  const a=A[state.sel],s=sc.get(a);
+  let h=`<div class="dhead"><div class="eyebrow">${esc(a.i)} · ${a.g} · ${STAGES[a.st]}</div><div class="eyebrow">${whenHTML(a)} · <span class="rn${monthsTo(a)<=3?" soon":""}">${renewText(a)}</span></div><h2>${esc(a.n)}</h2><p>${esc(a.story)}</p></div>`;
+  if(!s){
+    h+=`<div class="empty">This account is still in ${STAGES[a.st].toLowerCase()}. With Customer Success joining ${JOIN.find(j=>j.v===state.join).l.toLowerCase()}, nobody on the post-sales team can see it yet. Everything recorded here so far reaches them as a handover note, if it is written down at all.</div>`;
+    $("detail").innerHTML=h;return;
+  }
+  const b=band(s.val);
+  h+=`<div class="overall"><div class="ovs"><div class="big num">${s.val}<small> / 100</small></div><span class="pill ${b}">${BANDNAME[b]}</span></div>
+   <div class="dims">${s.ds.map((v,i)=>`<div class="dim"><span class="dn">${DIMS[i].n}${infoBtn(i)}</span><span class="track"><span style="width:${pct(v)}%"></span></span><span class="num" style="text-align:right">${v.toFixed(1)}</span></div>`).join("")}
+   ${s.capped?`<div class="capnote">Weighted score is ${s.raw}, held at 49 by a high-risk flag. Averages hide emergencies, so flags override.</div>`:""}</div></div>`;
+  h+=`<div class="sect"><h3>Score at every stage</h3><p class="hint">Scores run from 1 to 5. Later stages count more, so proven results can make up for early gaps.</p><div class="gridwrap"><table class="journey"><thead><tr><th></th>${STAGES.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>`+
+   DIMS.map((d,i)=>`<tr><th scope="row">${d.s}</th>${STAGES.map((_,st)=>{
+     if(st>a.st)return `<td class="cnr">Not reached</td>`;
+     if(st<state.join)return `<td class="chid" title="Before Customer Success joined">No record</td>`;
+     const v=a.s[st][i];return `<td class="c${v}">${v}</td>`}).join("")}</tr>`).join("")+
+   `</tbody></table></div><div class="legend"><span><i class="c1"></i>1</span><span><i class="c2"></i>2</span><span><i class="c3"></i>3</span><span><i class="c4"></i>4</span><span><i class="c5"></i>5</span><span><i class="chid"></i>Before Customer Success joined</span></div></div>`;
+  h+=`<div class="sect"><h3>Goals being tracked</h3><div class="goalflow"><span><b class="num">${a.raised}</b> goals raised</span><span class="arrow" aria-hidden="true">→</span><span><b class="num">${a.goals.length}</b> confirmed for tracking</span></div>`+
+   (a.goals.length?`<div class="gridwrap"><table class="goals"><thead><tr><th>Goal</th><th>Benchmark</th><th>Target</th><th>Latest</th></tr></thead><tbody>${a.goals.map(g=>`<tr><td>${esc(g[0])}</td><td>${esc(g[1])}</td><td>${esc(g[2])}</td><td><b>${esc(g[3])}</b></td></tr>`).join("")}</tbody></table></div>`
+   :`<div class="empty">No goal has been narrowed down to something measurable yet.</div>`)+`</div>`;
+  h+=`<div class="sect chart"><h3>Usage compared with value</h3>`+(a.ser?`<p class="hint">Both indexed to 100, last six months. When usage climbs and value stays flat, high usage is a cost, not a win.</p>${chart(a.ser)}`:`<div class="empty">Shown once the account reaches adoption.</div>`)+`</div>`;
+  const ord={crit:0,watch:1,pos:2},lab={crit:"High risk",watch:"Medium risk",pos:"Good sign"},cls={crit:"risk",watch:"watch",pos:"good"};
+  const fl=[...a.flags].sort((x,y)=>ord[x[0]]-ord[y[0]]);
+  h+=`<div class="sect"><h3>Flags</h3>`+(fl.length?`<ul class="flags">${fl.map(f=>`<li><span class="pill ${cls[f[0]]}">${lab[f[0]]}</span><span>${esc(f[2])} <span class="chip">${STAGES[f[1]]}</span>${f[1]<state.join?`<span class="late">Raised in ${STAGES[f[1]].toLowerCase()}, before Customer Success joined. Seen late.</span>`:""}</span></li>`).join("")}</ul>`:`<div class="empty">No flags on this account.</div>`)+`</div>`;
+  $("detail").innerHTML=h;
+}
+
+let suggested=null;
+function renderLoop(){
+  const adopt=A.filter(a=>a.st===3);
+  const best=adopt.filter(a=>a.s[3][0]>=5),worst=adopt.filter(a=>a.s[3][0]<=2);
+  const early=[0,1].filter(s=>s>=state.join);
+  if(!early.length){
+    $("cmp").innerHTML=`<div class="empty">Customer Success joined after implementation, so there are no discovery or kickoff records to learn from. The retrospective can only guess at what happened early on.</div>`;
+    $("loopActions").innerHTML="";$("loopCaveat").textContent="";suggested=null;return;
+  }
+  const avg=(g,d)=>{let t=0,n=0;g.forEach(a=>early.forEach(s=>{t+=a.s[s][d];n++}));return t/n};
+  const rows=DIMS.map(d=>{const b=avg(best,d.k),w=avg(worst,d.k);return {d,b,w,diff:b-w}});
+  const max=Math.max(...rows.map(r=>r.diff),0.01);
+  suggested=rows.map(r=>Math.max(1,1+Math.round(Math.max(0,r.diff)/max*4)));
+  $("cmp").innerHTML=rows.map((r,i)=>`<div class="r"><span class="dn">${r.d.n}${infoBtn(r.d.k)}</span><span class="sug">Weight ${suggested[i]}</span>
+    <span class="bars"><span class="s" style="width:${pct(r.b)}%" title="Best: ${r.b.toFixed(1)}"></span><span class="t" style="width:${pct(r.w)}%" title="Struggled: ${r.w.toFixed(1)}"></span></span></div>`).join("");
+  $("loopActions").innerHTML=`<button class="primary" type="button" id="applyW">Apply the suggested weights</button>`;
+  $("applyW").addEventListener("click",()=>{state.w=[...suggested];update()});
+  $("loopCaveat").textContent=`Based on ${best.length} accounts that went best and ${worst.length} that struggled, using records from ${early.map(s=>STAGES[s].toLowerCase()).join(" and ")}. A sample this small is a starting point for discussion, not proof. Account stability barely separates the groups early on because it shows up as sudden events, which the flags handle.`;
+}
+
+function update(){
+  const sc=new Map(A.map(a=>[a,score(a)]));
+  syncControls();renderSummary(sc);renderRows(sc);renderDetail(sc);renderLoop();
+}
+$("resetW").addEventListener("click",()=>{state.w=[3,3,3,3,3];update()});
+$("sort").addEventListener("change",e=>{state.sort=e.target.value;update()});
+renderControls();update();
+
+/* Definition pop-ups: hover or focus to preview, tap or click to pin, Escape or outside click to close */
+const tip=document.createElement("div");tip.id="tip";tip.className="tip";tip.setAttribute("role","tooltip");tip.hidden=true;document.body.appendChild(tip);
+let pinned=null;
+function showTip(btn){
+  const d=DIMS[+btn.dataset.d];tip.innerHTML=`<b>${esc(d.n)}</b>${esc(d.def)}`;tip.hidden=false;
+  const r=btn.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
+  let left=Math.min(Math.max(16,r.left-12),innerWidth-tw-16),top=r.bottom+8;
+  if(top+th>innerHeight-8)top=Math.max(8,r.top-th-8);
+  tip.style.left=left+"px";tip.style.top=top+"px";
+  document.querySelectorAll(".info").forEach(b=>b.setAttribute("aria-expanded",b===btn));
+}
+function hideTip(){tip.hidden=true;pinned=null;document.querySelectorAll(".info").forEach(b=>b.setAttribute("aria-expanded","false"))}
+const infoOf=e=>e.target.closest&&e.target.closest(".info");
+document.addEventListener("mouseover",e=>{const b=infoOf(e);if(b&&!pinned)showTip(b)});
+document.addEventListener("mouseout",e=>{const b=infoOf(e);if(b&&!pinned)hideTip()});
+document.addEventListener("focusin",e=>{const b=infoOf(e);if(b&&!pinned)showTip(b)});
+document.addEventListener("focusout",e=>{const b=infoOf(e);if(b&&!pinned)hideTip()});
+document.addEventListener("click",e=>{const b=infoOf(e);if(b){if(pinned===b)hideTip();else{pinned=b;showTip(b)}return}if(pinned&&!tip.contains(e.target))hideTip()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")hideTip()});
+let lastBtn=null;const _show=showTip;showTip=function(b){lastBtn=b;_show(b)};
+addEventListener("scroll",()=>{if(!tip.hidden&&lastBtn&&lastBtn.isConnected)_show(lastBtn);else if(!tip.hidden)hideTip()},{passive:true});
+</script>
+
+<button type="button" class="fbfloat fb" data-section="Whole page">Give feedback</button>
+
+<dialog id="fbDlg" aria-labelledby="fbTitle">
+  <form id="fbForm">
+    <h2 id="fbTitle">Share feedback</h2>
+    <p class="fbabout">About: <b id="fbSec">Whole page</b></p>
+    <label for="fbText">Your feedback</label>
+    <textarea id="fbText" rows="5" required placeholder="What's unclear, what's missing, or what would make this more useful for your team?"></textarea>
+    <label for="fbRole">Your role <span>(optional)</span></label>
+    <input id="fbRole" autocomplete="organization-title">
+    <label for="fbName">Your name and how to reach you, if you'd like to talk it through <span>(optional)</span></label>
+    <input id="fbName" autocomplete="name">
+    <p class="fbnote">Anonymous unless you add your name.</p>
+    <p id="fbStatus" role="status"></p>
+    <div class="fbactions">
+      <button type="button" id="fbCancel" class="fbsecondary">Cancel</button>
+      <button type="submit" id="fbSend" class="primary">Send feedback</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* ============================================================
+   SETTINGS: paste your two PostHog values between the quotes.
+   posthogKey: Project settings > Project API key (starts with phc_)
+   surveyId:   the ID of your "Account Journey Score feedback" survey
+   posthogHost: keep the EU address if your PostHog account is in the EU cloud
+   ============================================================ */
+const CONFIG={
+  posthogKey:"PASTE_YOUR_PROJECT_API_KEY",
+  posthogHost:"https://eu.i.posthog.com",
+  surveyId:"PASTE_YOUR_SURVEY_ID"
+};
+</script>
+<script>
+const PH_ON=CONFIG.posthogKey.startsWith("phc_");
+let phLoaded=false;
+if(PH_ON){
+  const s=document.createElement("script");
+  s.src="https://cdn.jsdelivr.net/npm/posthog-js@1.438.8/dist/array.full.js";
+  s.async=true;
+  s.onload=()=>{try{
+    posthog.init(CONFIG.posthogKey,{api_host:CONFIG.posthogHost,persistence:"memory",person_profiles:"identified_only",capture_pageview:true,autocapture:true,disable_session_recording:true});
+    phLoaded=true;
+  }catch(e){}};
+  document.head.appendChild(s);
+}
+function track(ev,props){if(phLoaded)try{posthog.capture(ev,props||{})}catch(e){}}
+
+/* Usage tracking: which controls people use and which accounts they open */
+let wTimer=null;
+document.addEventListener("input",e=>{if(e.target.matches&&e.target.matches(".w input")){clearTimeout(wTimer);wTimer=setTimeout(()=>{const p={};DIMS.forEach((d,i)=>p[d.s.toLowerCase()]=state.w[i]);track("weights_changed",p)},800)}});
+document.addEventListener("change",e=>{if(e.target.id==="sort")track("sort_changed",{sort:e.target.value})});
+document.addEventListener("click",e=>{
+  const t=e.target.closest?e.target.closest("button"):null;if(!t)return;
+  if(t.classList.contains("row")){const a=A[+t.dataset.i];track("account_opened",{account:a.n,stage:STAGES[a.st]})}
+  else if(t.closest("#joinSeg"))track("cs_join_changed",{joins:t.textContent});
+  else if(t.closest("#filters"))track("filter_changed",{filter:t.textContent});
+  else if(t.id==="applyW")track("suggested_weights_applied");
+  else if(t.id==="resetW")track("weights_reset");
+  else if(t.classList.contains("info"))track("definition_viewed",{score:DIMS[+t.dataset.d].n});
+},true);
+
+/* Feedback buttons beside each section, including inside the account detail */
+function fbBtn(section,label){return `<button type="button" class="fb" data-section="${esc(section)}">${label||"Feedback"}</button>`}
+function decorate(){
+  const d=$("detail");if(!d)return;
+  const name=A[state.sel].n;
+  const head=d.querySelector(".dhead h2");
+  if(head&&!head.querySelector(".fb"))head.insertAdjacentHTML("beforeend",fbBtn("Account detail: "+name,"Feedback on this account"));
+  d.querySelectorAll(".sect h3").forEach(h=>{if(!h.querySelector(".fb"))h.insertAdjacentHTML("beforeend",fbBtn(h.textContent))});
+}
+const _update=update;update=function(){_update();decorate()};
+document.querySelectorAll(".controls .ctl-head h2").forEach(h=>h.insertAdjacentHTML("beforeend",fbBtn(h.textContent)));
+$("summary").insertAdjacentHTML("afterend",`<div class="wrap fbrow">${fbBtn("Summary tiles","Feedback on these numbers")}</div>`);
+document.querySelector(".listhead h2").insertAdjacentHTML("beforeend",fbBtn("Portfolio cards"));
+document.querySelector(".loop h2").insertAdjacentHTML("beforeend",fbBtn("Learning loop"));
+decorate();
+
+/* Feedback form: sends to the PostHog survey */
+const dlg=$("fbDlg"),form=$("fbForm"),status=$("fbStatus");
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".fb");if(!b)return;
+  $("fbSec").textContent=b.dataset.section;status.textContent=PH_ON?"":"Feedback isn't connected yet. Check back soon.";
+  $("fbSend").disabled=!PH_ON;form.reset();
+  if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","");
+  track("feedback_opened",{section:b.dataset.section});setTimeout(()=>$("fbText").focus(),50)});
+$("fbCancel").addEventListener("click",()=>dlg.close());
+form.addEventListener("submit",e=>{e.preventDefault();
+  const answers=[$("fbSec").textContent,$("fbText").value.trim(),$("fbRole").value.trim(),$("fbName").value.trim()];
+  if(!answers[1]){status.textContent="Add your feedback before sending.";return}
+  if(!phLoaded){status.textContent="Feedback couldn't be sent. A browser extension may be blocking it.";return}
+  $("fbSend").disabled=true;status.textContent="Sending…";
+  let sent=false;
+  const send=list=>{if(sent)return;sent=true;
+    const props={$survey_id:CONFIG.surveyId,$survey_completed:true,$survey_submission_id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()))};
+    const sv=(list||[]).find(x=>x.id===CONFIG.surveyId);
+    if(sv&&sv.questions&&sv.questions.length>=4){
+      if(sv.current_iteration!=null)props.$survey_iteration=sv.current_iteration;
+      props.$survey_questions=sv.questions.map(q=>({id:q.id,question:q.question}));
+      sv.questions.slice(0,4).forEach((q,i)=>props["$survey_response_"+q.id]=answers[i]);
+    }else answers.forEach((a,i)=>props[i?"$survey_response_"+i:"$survey_response"]=a);
+    track("survey sent",props);
+    status.textContent="Thank you. Your feedback was sent.";
+    setTimeout(()=>{dlg.close();$("fbSend").disabled=false},1600)};
+  try{posthog.getSurveys(send)}catch(err){}
+  setTimeout(()=>send(null),3000);
+});
+</script>
+
+</body>
+</html>
