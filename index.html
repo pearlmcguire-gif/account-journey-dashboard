@@ -214,6 +214,11 @@ dialog#fbDlg::backdrop{background:rgba(29,16,44,.55)}
 .fbsecondary{background:none;border:1px solid var(--line);border-radius:6px;padding:9px 14px;cursor:pointer;margin-top:12px}
 .primary:disabled{opacity:.5;cursor:not-allowed}
 footer .wrap{padding-bottom:80px}
+#fbFallback{display:grid;gap:8px;margin-top:4px}
+#fbFallback[hidden]{display:none}
+.fbfb{margin:0;font-size:13px;color:var(--warn);font-weight:500}
+.fbfb a{color:var(--accent-strong)}
+#fbFallback .fbsecondary{justify-self:start;margin-top:0}
 </style>
 
 </head>
@@ -590,6 +595,11 @@ addEventListener("scroll",()=>{if(!tip.hidden&&lastBtn&&lastBtn.isConnected)_sho
     <input id="fbName" autocomplete="name">
     <p class="fbnote">Anonymous unless you add your name.</p>
     <p id="fbStatus" role="status"></p>
+    <div id="fbFallback" hidden>
+      <p class="fbfb">Your browser's privacy settings blocked this form from sending. Copy your feedback below and send it to Pearl directly<span id="fbLi"></span>.</p>
+      <textarea id="fbCopyText" rows="4" readonly></textarea>
+      <button type="button" id="fbCopy" class="fbsecondary">Copy feedback</button>
+    </div>
     <div class="fbactions">
       <button type="button" id="fbCancel" class="fbsecondary">Cancel</button>
       <button type="submit" id="fbSend" class="primary">Send feedback</button>
@@ -607,7 +617,8 @@ addEventListener("scroll",()=>{if(!tip.hidden&&lastBtn&&lastBtn.isConnected)_sho
 const CONFIG={
   posthogKey:"phc_s65M8H7Wxc7P4FTMWaFFJHGKcZ8xnUoYv8ddcUES2EdE",
   posthogHost:"https://eu.i.posthog.com",
-  surveyId:"01a17dac-a19e-0000-e176-226b4e2c95eb"
+  surveyId:"01a17dac-a19e-0000-e176-226b4e2c95eb",
+  linkedin:""   /* your LinkedIn profile address, used when a browser blocks the form */
 };
 </script>
 <script>
@@ -659,31 +670,39 @@ decorate();
 const dlg=$("fbDlg"),form=$("fbForm"),status=$("fbStatus");
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".fb");if(!b)return;
   $("fbSec").textContent=b.dataset.section;status.textContent=PH_ON?"":"Feedback isn't connected yet. Check back soon.";
-  $("fbSend").disabled=!PH_ON;form.reset();
+  $("fbSend").disabled=!PH_ON;form.reset();$("fbFallback").hidden=true;$("fbSend").hidden=false;
   if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","");
   track("feedback_opened",{section:b.dataset.section});track("survey shown",{$survey_id:CONFIG.surveyId});setTimeout(()=>$("fbText").focus(),50)});
 $("fbCancel").addEventListener("click",()=>{track("survey dismissed",{$survey_id:CONFIG.surveyId});dlg.close()});
-form.addEventListener("submit",e=>{e.preventDefault();
+form.addEventListener("submit",async e=>{e.preventDefault();
   const answers=[$("fbSec").textContent,$("fbText").value.trim(),$("fbRole").value.trim(),$("fbName").value.trim()];
   if(!answers[1]){status.textContent="Add your feedback before sending.";return}
-  if(!phLoaded){status.textContent="Feedback couldn't be sent. A browser extension may be blocking it.";return}
   $("fbSend").disabled=true;status.textContent="Sending…";
-  let sent=false;
-  const send=list=>{if(sent)return;sent=true;
-    const text=`Section: ${answers[0]}\nFeedback: ${answers[1]}\nRole: ${answers[2]||"(not given)"}\nContact: ${answers[3]||"(anonymous)"}`;
-    const props={$survey_id:CONFIG.surveyId,$survey_completed:true,$survey_submission_id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),$survey_response:text};
-    const sv=(list||[]).find(x=>x.id===CONFIG.surveyId);
-    if(sv&&sv.questions&&sv.questions.length){
-      if(sv.current_iteration!=null)props.$survey_iteration=sv.current_iteration;
-      const q=sv.questions[0];props.$survey_questions=[{id:q.id,question:q.question}];props["$survey_response_"+q.id]=text;
-    }
-    track("feedback_submitted",{section:answers[0],feedback:answers[1],role:answers[2],contact:answers[3]});
-    track("survey sent",props);
+  const text=`Section: ${answers[0]}\nFeedback: ${answers[1]}\nRole: ${answers[2]||"(not given)"}\nContact: ${answers[3]||"(anonymous)"}`;
+  let q=null;
+  if(phLoaded)await new Promise(res=>{let d=false;const done=()=>{if(!d){d=true;res()}};
+    try{posthog.getSurveys(list=>{const sv=(list||[]).find(x=>x.id===CONFIG.surveyId);if(sv&&sv.questions&&sv.questions[0])q=sv.questions[0];done()})}catch(_){done()}
+    setTimeout(done,2500)});
+  const props={$survey_id:CONFIG.surveyId,$survey_completed:true,$survey_submission_id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),$survey_response:text};
+  if(q){props.$survey_questions=[{id:q.id,question:q.question}];props["$survey_response_"+q.id]=text}
+  let did=null;try{did=phLoaded?posthog.get_distinct_id():null}catch(_){}
+  did=did||("anon-"+(crypto.randomUUID?crypto.randomUUID():Date.now()));
+  const post=(event,properties)=>fetch(CONFIG.posthogHost.replace(/\/$/,"")+"/i/v0/e/",{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,
+    body:JSON.stringify({api_key:CONFIG.posthogKey,event,distinct_id:did,properties:Object.assign({$current_url:location.href,$lib:"web"},properties)})});
+  try{
+    const res=await post("survey sent",props);if(!res.ok)throw new Error("status "+res.status);
+    post("feedback_submitted",{section:answers[0],feedback:answers[1],role:answers[2],contact:answers[3]}).catch(()=>{});
     status.textContent="Thank you. Your feedback was sent.";
-    setTimeout(()=>{dlg.close();$("fbSend").disabled=false},1600)};
-  try{posthog.getSurveys(send)}catch(err){}
-  setTimeout(()=>send(null),3000);
+    setTimeout(()=>{dlg.close();$("fbSend").disabled=false},1600);
+  }catch(err){
+    status.textContent="";
+    $("fbCopyText").value=text;
+    $("fbLi").innerHTML=CONFIG.linkedin?` on <a href="${esc(CONFIG.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:" on LinkedIn";
+    $("fbFallback").hidden=false;$("fbSend").hidden=true;
+  }
 });
+$("fbCopy").addEventListener("click",async()=>{const t=$("fbCopyText");
+  try{await navigator.clipboard.writeText(t.value);$("fbCopy").textContent="Copied"}catch(_){t.select();$("fbCopy").textContent="Selected: press Ctrl+C or Cmd+C"}});
 </script>
 
 </body>
