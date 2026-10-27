@@ -16,8 +16,9 @@
   --ink:#2b183f; --deep:#1d102c; --paper:#fbfaf6; --cyan:#05a8d1; --cyan-dk:#007b9c; --lav:#9b83b6; --muted:#6f6777;
   --bg:var(--paper); --fg:var(--ink); --sub:var(--muted); --surface:#ffffff; --surface2:#f3eff8; --line:#e2dbea;
   --accent:var(--cyan-dk); --accent-soft:#d9f1f7; --band:var(--ink); --band-fg:var(--paper);
-  --good:#25805f; --good-bg:#dcefe7; --warn:#a86b0c; --warn-bg:#f6e8cf; --risk:#b23441; --risk-bg:#f6dadd;
-  --s1:#d66a73; --s2:#e3ac55; --s3:#cfc4dd; --s4:#7cc8d9; --s5:#0a8fb1; --cell-fg:#1d102c; --cell-fg5:#ffffff;
+  --good:#1d6a4e; --good-bg:#dcefe7; --warn:#8a5700; --warn-bg:#f6e8cf; --risk:#b23441; --risk-bg:#f6dadd;
+  --s1:#b8323c; --s2:#f2a97e; --s3:#ece6f3; --s4:#6db9d8; --s5:#0b6e8f; --cell-fg:#1d102c; --cell-fg5:#ffffff; --cell-fg3:#2b183f;
+  --cmp-a:#0b6e8f; --cmp-b:#e08a3c; --accent-strong:#00657f;
   --usage:var(--lav); --value:var(--cyan-dk);
   --display:"Playfair Display", Georgia, "Times New Roman", serif;
   --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -26,13 +27,15 @@
   --bg:var(--deep); --fg:#f3eff8; --sub:#b9adc9; --surface:#2b183f; --surface2:#24143a; --line:#3f2c57;
   --accent:#3fc3e4; --accent-soft:#123e4f; --band:#2b183f; --band-fg:#fbfaf6;
   --good:#5fc79c; --good-bg:#16382d; --warn:#e9b65c; --warn-bg:#3d2e14; --risk:#ef7d87; --risk-bg:#45192a;
-  --s1:#c4525d; --s2:#c99037; --s3:#5b4775; --s4:#2f8ea5; --s5:#05a8d1; --cell-fg:#fbfaf6; --cell-fg5:#1d102c;
+  --s1:#c94450; --s2:#e8996a; --s3:#4a3a63; --s4:#5aaed0; --s5:#0b789b; --cell-fg:#1d102c; --cell-fg5:#ffffff; --cell-fg3:#f3eff8;
+  --cmp-a:#3fc3e4; --cmp-b:#e8996a; --accent-strong:#3fc3e4;
   --usage:#b49fd0; --value:#3fc3e4; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:var(--deep); --fg:#f3eff8; --sub:#b9adc9; --surface:#2b183f; --surface2:#24143a; --line:#3f2c57;
   --accent:#3fc3e4; --accent-soft:#123e4f; --band:#2b183f; --band-fg:#fbfaf6;
   --good:#5fc79c; --good-bg:#16382d; --warn:#e9b65c; --warn-bg:#3d2e14; --risk:#ef7d87; --risk-bg:#45192a;
-  --s1:#c4525d; --s2:#c99037; --s3:#5b4775; --s4:#2f8ea5; --s5:#05a8d1; --cell-fg:#fbfaf6; --cell-fg5:#1d102c;
+  --s1:#c94450; --s2:#e8996a; --s3:#4a3a63; --s4:#5aaed0; --s5:#0b789b; --cell-fg:#1d102c; --cell-fg5:#ffffff; --cell-fg3:#f3eff8;
+  --cmp-a:#3fc3e4; --cmp-b:#e8996a; --accent-strong:#3fc3e4;
   --usage:#b49fd0; --value:#3fc3e4; color-scheme:dark }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
@@ -72,7 +75,7 @@ header .eyebrow{color:#7fd6ec}
 .w input{width:100%;accent-color:var(--accent)}
 .ctl-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
 .ctl-head h2{font-size:18px}
-.linkbtn{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer;padding:4px 0;font-size:13px}
+.linkbtn{background:none;border:0;color:var(--accent-strong);font-weight:700;cursor:pointer;padding:4px 0;font-size:13px}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#fbfaf6;border-color:var(--ink)}
@@ -148,7 +151,9 @@ table.journey{border-collapse:separate;border-spacing:3px;width:100%;min-width:4
 .journey th{font-weight:500;color:var(--sub);text-align:left;padding:2px 4px}
 .journey thead th{text-align:center}
 .journey td{text-align:center;height:30px;border-radius:4px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--cell-fg)}
-.c1{background:var(--s1)}.c2{background:var(--s2)}.c3{background:var(--s3)}.c4{background:var(--s4)}.c5{background:var(--s5);color:var(--cell-fg5)!important}
+.c1{background:var(--s1);color:var(--cell-fg5)!important}.c2{background:var(--s2)}.c3{background:var(--s3);color:var(--cell-fg3)!important}.c4{background:var(--s4)}.c5{background:var(--s5);color:var(--cell-fg5)!important}
+.legend i{border:1px solid var(--line)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .cnr{background:transparent;border:1px dashed var(--line);color:var(--sub)!important;font-weight:400!important}
 .chid{background:repeating-linear-gradient(135deg,var(--surface2) 0 6px,transparent 6px 11px);border:1px solid var(--line);color:var(--sub)!important;font-weight:400!important}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--sub);margin-top:8px;align-items:center}
@@ -173,8 +178,8 @@ table.goals{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
 .cmp .r{display:grid;grid-template-columns:minmax(0,1fr) 60px;gap:4px 10px;font-size:13px;align-items:center}
 .cmp .bars{grid-column:1;display:grid;gap:3px}
 .cmp .bars span{display:block;height:7px;border-radius:3px}
-.cmp .s{background:var(--good)} .cmp .t{background:var(--risk)}
-.cmp .sug{grid-row:1/3;grid-column:2;text-align:right;font-weight:700;color:var(--accent)}
+.cmp .s{background:var(--cmp-a)} .cmp .t{background:var(--cmp-b)}
+.cmp .sug{grid-row:1/3;grid-column:2;text-align:right;font-weight:700;color:var(--accent-strong)}
 .primary{background:var(--accent);color:var(--bg);border:0;border-radius:6px;padding:9px 14px;font-weight:700;cursor:pointer;margin-top:12px}
 .caveat{font-size:13px;color:var(--sub)}
 
@@ -274,7 +279,7 @@ footer .wrap{padding-bottom:80px}
       <p class="caveat" id="loopCaveat"></p>
     </div>
     <div>
-      <div class="legend" style="margin:0 0 12px"><span><i style="background:var(--good)"></i>Accounts that went best: early score</span><span><i style="background:var(--risk)"></i>Accounts that struggled: early score</span><span>Suggested weight on the right</span></div>
+      <div class="legend" style="margin:0 0 12px"><span><i style="background:var(--cmp-a)"></i>Accounts that went best: early score</span><span><i style="background:var(--cmp-b)"></i>Accounts that struggled: early score</span><span>Suggested weight on the right</span></div>
       <div class="cmp" id="cmp"></div>
     </div>
   </div>
@@ -504,7 +509,7 @@ function renderDetail(sc){
   h+=`<div class="overall"><div class="ovs"><div class="big num">${s.val}<small> / 100</small></div><span class="pill ${b}">${BANDNAME[b]}</span></div>
    <div class="dims">${s.ds.map((v,i)=>`<div class="dim"><span class="dn">${DIMS[i].n}${infoBtn(i)}</span><span class="track"><span style="width:${pct(v)}%"></span></span><span class="num" style="text-align:right">${v.toFixed(1)}</span></div>`).join("")}
    ${s.capped?`<div class="capnote">Weighted score is ${s.raw}, held at 49 by a high-risk flag. Averages hide emergencies, so flags override.</div>`:""}</div></div>`;
-  h+=`<div class="sect"><h3>Score at every stage</h3><p class="hint">Scores run from 1 to 5. Later stages count more, so proven results can make up for early gaps.</p><div class="gridwrap"><table class="journey"><thead><tr><th></th>${STAGES.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>`+
+  h+=`<div class="sect"><h3>Score at every stage</h3><p class="hint">Scores run from 1 to 5. Later stages count more, so proven results can make up for early gaps.</p><div class="gridwrap"><table class="journey"><thead><tr><th><span class="sr">Score</span></th>${STAGES.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>`+
    DIMS.map((d,i)=>`<tr><th scope="row">${d.s}</th>${STAGES.map((_,st)=>{
      if(st>a.st)return `<td class="cnr">Not reached</td>`;
      if(st<state.join)return `<td class="chid" title="Before Customer Success joined">No record</td>`;
@@ -595,7 +600,7 @@ addEventListener("scroll",()=>{if(!tip.hidden&&lastBtn&&lastBtn.isConnected)_sho
 <script>
 /* ============================================================
    SETTINGS: paste your two PostHog values between the quotes.
-   posthogKey: Project settings > Project API key (starts with phc_)
+   posthogKey: Settings > Project > Project token (also called Project API key)
    surveyId:   the ID of your "Account Journey Score feedback" survey
    posthogHost: keep the EU address if your PostHog account is in the EU cloud
    ============================================================ */
@@ -606,7 +611,7 @@ const CONFIG={
 };
 </script>
 <script>
-const PH_ON=CONFIG.posthogKey.startsWith("phc_");
+const PH_ON=!/PASTE_/.test(CONFIG.posthogKey)&&CONFIG.posthogKey.length>10;
 let phLoaded=false;
 if(PH_ON){
   const s=document.createElement("script");
@@ -656,8 +661,8 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
   $("fbSec").textContent=b.dataset.section;status.textContent=PH_ON?"":"Feedback isn't connected yet. Check back soon.";
   $("fbSend").disabled=!PH_ON;form.reset();
   if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","");
-  track("feedback_opened",{section:b.dataset.section});setTimeout(()=>$("fbText").focus(),50)});
-$("fbCancel").addEventListener("click",()=>dlg.close());
+  track("feedback_opened",{section:b.dataset.section});track("survey shown",{$survey_id:CONFIG.surveyId});setTimeout(()=>$("fbText").focus(),50)});
+$("fbCancel").addEventListener("click",()=>{track("survey dismissed",{$survey_id:CONFIG.surveyId});dlg.close()});
 form.addEventListener("submit",e=>{e.preventDefault();
   const answers=[$("fbSec").textContent,$("fbText").value.trim(),$("fbRole").value.trim(),$("fbName").value.trim()];
   if(!answers[1]){status.textContent="Add your feedback before sending.";return}
@@ -665,13 +670,14 @@ form.addEventListener("submit",e=>{e.preventDefault();
   $("fbSend").disabled=true;status.textContent="Sending…";
   let sent=false;
   const send=list=>{if(sent)return;sent=true;
-    const props={$survey_id:CONFIG.surveyId,$survey_completed:true,$survey_submission_id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()))};
+    const text=`Section: ${answers[0]}\nFeedback: ${answers[1]}\nRole: ${answers[2]||"(not given)"}\nContact: ${answers[3]||"(anonymous)"}`;
+    const props={$survey_id:CONFIG.surveyId,$survey_completed:true,$survey_submission_id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),$survey_response:text};
     const sv=(list||[]).find(x=>x.id===CONFIG.surveyId);
-    if(sv&&sv.questions&&sv.questions.length>=4){
+    if(sv&&sv.questions&&sv.questions.length){
       if(sv.current_iteration!=null)props.$survey_iteration=sv.current_iteration;
-      props.$survey_questions=sv.questions.map(q=>({id:q.id,question:q.question}));
-      sv.questions.slice(0,4).forEach((q,i)=>props["$survey_response_"+q.id]=answers[i]);
-    }else answers.forEach((a,i)=>props[i?"$survey_response_"+i:"$survey_response"]=a);
+      const q=sv.questions[0];props.$survey_questions=[{id:q.id,question:q.question}];props["$survey_response_"+q.id]=text;
+    }
+    track("feedback_submitted",{section:answers[0],feedback:answers[1],role:answers[2],contact:answers[3]});
     track("survey sent",props);
     status.textContent="Thank you. Your feedback was sent.";
     setTimeout(()=>{dlg.close();$("fbSend").disabled=false},1600)};
