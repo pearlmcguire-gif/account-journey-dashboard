@@ -136,7 +136,7 @@ main .wrap{padding-block:18px 28px;display:grid;grid-template-columns:minmax(0,1
 .pill.risk{background:var(--risk-bg);color:var(--risk)} .pill.watch{background:var(--warn-bg);color:var(--warn)} .pill.good{background:var(--good-bg);color:var(--good)} .pill.none{background:var(--surface2);color:var(--sub)}
 .chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;background:var(--surface2);color:var(--sub);font-weight:500}
 
-.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px;min-width:0}
+.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px;min-width:0;max-height:calc(100vh - 24px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain}
 .sect,.dhead,.overall{min-width:0}
 .dhead{display:grid;gap:6px}
 .dhead .eyebrow+.eyebrow{margin-top:-4px}
@@ -199,7 +199,7 @@ footer a{color:var(--accent-strong);font-weight:700}
 
 @media (max-width:900px){
   .controls .wrap,main .wrap,.loop .wrap{grid-template-columns:minmax(0,1fr)}
-  .detail{position:static}
+  .detail{position:static;max-height:none;overflow:visible}
 }
 @media (max-width:480px){ .overall{grid-template-columns:minmax(0,1fr)} .dim{grid-template-columns:minmax(0,1fr) 70px 30px} }
 @media (prefers-reduced-motion:no-preference){ .track span,.minibars i::after{transition:width .35s ease} }
